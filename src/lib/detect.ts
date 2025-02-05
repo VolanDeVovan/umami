@@ -14,7 +14,14 @@ import {
 } from './constants';
 import { NextApiRequestCollect } from 'pages/api/send';
 
-let lookup;
+// Add caching options here
+const maxmindOptions = {
+  cache: {
+    max: 10000, // Adjust as needed
+    maxAge: 1000 * 60 * 60, // 1 hour (adjust as needed)
+  },
+  watchForUpdates: false, // Disable automatic updates
+};
 
 export function getIpAddress(req: NextApiRequestCollect) {
   const customHeader = String(process.env.CLIENT_IP_HEADER).toLowerCase();
@@ -108,12 +115,8 @@ export async function getLocation(ip: string, req: NextApiRequestCollect) {
   }
 
   // Database lookup
-  if (!lookup) {
-    const dir = path.join(process.cwd(), 'geo');
-
-    lookup = await maxmind.open(path.resolve(dir, 'GeoLite2-City.mmdb'));
-  }
-
+  const dir = path.join(process.cwd(), 'geo');
+  const lookup = await maxmind.open(path.resolve(dir, 'GeoLite2-City.mmdb'), maxmindOptions); // Pass options here
   const result = lookup.get(ip);
 
   if (result) {
